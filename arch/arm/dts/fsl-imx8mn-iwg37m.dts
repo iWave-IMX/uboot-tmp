@@ -288,6 +288,13 @@
 			>;
 		};
 
+		pinctrl_usbotg: usb2grp {  /*USB1: USB OTG IOMUX Pin COnfiguration */
+			fsl,pins = <
+				MX8MN_IOMUXC_GPIO1_IO12__GPIO1_IO12		0x41
+				MX8MN_IOMUXC_GPIO1_IO13__GPIO1_IO13		0x41
+			>;
+		};
+
 		pinctrl_wdog: wdoggrp { /* WATCHDOG: Watchdog IOMUX Pin COnfiguration */
 			fsl,pins = <
 				MX8MN_IOMUXC_GPIO1_IO02__WDOG1_WDOG_B		0xc6
@@ -530,6 +537,13 @@
 	pinctrl-0 = <&pinctrl_wdog>;
 	fsl,ext-reset-output;
 	status = "okay";
+};
+
+&usbotg1 { /* USB1: USB OTG */
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_usbotg>;
+        dr_mode = "otg";
+        status = "okay";
 };
 
 &A53_0 { /* A53 CPU */

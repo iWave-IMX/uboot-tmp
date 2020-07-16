@@ -22,6 +22,12 @@
 #include <power/regulator.h>
 #include <asm/arch/sys_proto.h>
 
+#ifdef CONFIG_TARGET_IMX8MN_IWG37M
+/* IWG37M: USB: Configuring USB OTG Power GPIO based on OTG ID */
+#include <asm-generic/gpio.h>
+#define OTG_PWR_GPIO 12
+#endif
+
 #include "ehci.h"
 #if CONFIG_IS_ENABLED(POWER_DOMAIN)
 #include <power-domain.h>
@@ -619,10 +625,22 @@ static int ehci_usb_phy_mode(struct udevice *dev)
 					      USBNC_PHY_STATUS_OFFSET);
 		val = readl(phy_status);
 
+#ifdef CONFIG_TARGET_IMX8MN_IWG37M
+		/* IWG37M: USB: Configuring USB OTG Power GPIO based on OTG ID */
+		gpio_request(OTG_PWR_GPIO, "OTG-PWR-GPIO");
+		if (val & USBNC_PHYSTATUS_ID_DIG){
+			gpio_direction_output(OTG_PWR_GPIO,0);
+			priv->init_type = USB_INIT_DEVICE;
+		}else {
+			gpio_direction_output(OTG_PWR_GPIO,1);
+			priv->init_type = USB_INIT_HOST;
+		}
+#else
 		if (val & USBNC_PHYSTATUS_ID_DIG)
 			priv->init_type = USB_INIT_DEVICE;
 		else
 			priv->init_type = USB_INIT_HOST;
+#endif
 	} else {
 		return -EINVAL;
 	}

@@ -32,6 +32,7 @@
 #include <power/pmic.h>
 #include <power/bd71837.h>
 #include "../common/tcpc.h"
+#include <usb.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -220,6 +221,27 @@ int board_phy_config(struct phy_device *phydev)
 }
 #endif
 
+int board_usb_init(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	debug("board_usb_init %d, type %d\n", index, init);
+
+	imx8m_usb_power(index, true);
+
+	return ret;
+}
+
+int board_usb_cleanup(int index, enum usb_init_type init)
+{
+	int ret = 0;
+
+	debug("board_usb_cleanup %d, type %d\n", index, init);
+
+	imx8m_usb_power(index, false);
+	return ret;
+}
+
 int board_init(void)
 {
 
@@ -310,6 +332,17 @@ static void printboard_info(void)
      printf ("\n");
 }
 
+#define OTG_OC IMX_GPIO_NR(1, 13)
+static iomux_v3_cfg_t const otg_oc_pads[] = {
+	IMX8MN_PAD_GPIO1_IO13__GPIO1_IO13 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static void usb_otg_oc_enable(void)
+{
+	imx_iomux_v3_setup_multiple_pads(otg_oc_pads, ARRAY_SIZE(otg_oc_pads));
+	gpio_request(OTG_OC, "OTG-OC-GPIO");
+	gpio_direction_input(OTG_OC);
+}
 
 static void peripheral_reset(void)
 {
@@ -324,6 +357,7 @@ int board_late_init(void)
 {
 	printboard_info();
 	peripheral_reset();
+	usb_otg_oc_enable();
 #ifdef CONFIG_ENV_IS_IN_MMC
 	board_late_mmc_env_init();
 #endif
