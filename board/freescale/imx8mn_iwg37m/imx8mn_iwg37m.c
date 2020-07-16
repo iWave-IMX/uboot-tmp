@@ -33,6 +33,13 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
+
+static iomux_v3_cfg_t const uart_pads[] = {
+	IMX8MN_PAD_UART4_RXD__UART4_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
+	IMX8MN_PAD_UART4_TXD__UART4_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
+};
+
 
 #ifdef CONFIG_MXC_SPI
 #define SPI_PAD_CTRL	(PAD_CTL_DSE2 | PAD_CTL_HYS)
@@ -96,6 +103,8 @@ static void setup_gpmi_nand(void)
 
 int board_early_init_f(void)
 {
+	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
+
 #ifdef CONFIG_NAND_MXS
 	setup_gpmi_nand(); /* SPL will call the board_early_init_f */
 #endif

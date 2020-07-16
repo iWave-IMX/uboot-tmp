@@ -20,6 +20,14 @@
 	model = "iW-RainboW-G37M-i.MX8MN-SODIMM";
 	compatible = "fsl,imx8mn-iwg37m", "fsl,imx8mn";
 
+	aliases {
+                serial3 = &uart4;
+
+	chosen {
+		bootargs = "console=ttymxc3,115200 earlycon=ec_imx6q,0x30a60000,115200";
+		stdout-path = &uart4;
+	};
+
 	memory@40000000 { /* RAM: 1GB Memory support */
         	device_type = "memory";
         	reg = <0x0 0x40000000 0 0x40000000>;
@@ -45,12 +53,34 @@
 		reg = <0 0x78000000 0 0x400000>;
 	};
 
+	uart4: serial@30a60000 {
+		compatible = "fsl,imx8mm-uart",
+			"fsl,imx6q-uart", "fsl,imx21-uart";
+		reg = <0x0 0x30a60000 0x0 0x10000>;
+		interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-parent = <&gpc>;
+		clocks = <&clk IMX8MN_CLK_UART4_ROOT>,
+			<&clk IMX8MN_CLK_UART4_ROOT>;
+		clock-names = "ipg", "per";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_uart4>;
+		status = "okay";
+	};
+
 };
 
 &iomuxc {
 	pinctrl-names = "default";
 
 	imx8mn-iwg37m {
+
+		pinctrl_uart4: uart3grp { /* UART4: Debug UART IOMUX Pin Configuration */
+			fsl,pins = <
+				MX8MN_IOMUXC_UART4_RXD__UART4_DCE_RX    	0x49
+				MX8MN_IOMUXC_UART4_TXD__UART4_DCE_TX		0x49
+			>;
+		};
+
 	};
 };
 
