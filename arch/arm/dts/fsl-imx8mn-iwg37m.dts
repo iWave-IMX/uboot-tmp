@@ -268,6 +268,12 @@
 			>;
 		};
 
+		pinctrl_wdog: wdoggrp { /* WATCHDOG: Watchdog IOMUX Pin COnfiguration */
+			fsl,pins = <
+				MX8MN_IOMUXC_GPIO1_IO02__WDOG1_WDOG_B		0xc6
+			>;
+		};
+
 	};
 };
 
@@ -474,6 +480,13 @@
 	pinctrl-2 = <&pinctrl_usdhc3_200mhz>;
 	bus-width = <8>;
 	non-removable;
+	status = "okay";
+};
+
+&wdog1 { /* Watchdog */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_wdog>;
+	fsl,ext-reset-output;
 	status = "okay";
 };
 
