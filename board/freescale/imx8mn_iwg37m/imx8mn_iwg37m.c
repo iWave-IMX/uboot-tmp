@@ -40,6 +40,32 @@ static iomux_v3_cfg_t const uart_pads[] = {
 	IMX8MN_PAD_UART4_TXD__UART4_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
+static iomux_v3_cfg_t const wdog_pads[] = {
+	IMX8MN_PAD_GPIO1_IO02__WDOG1_WDOG_B  | MUX_PAD_CTRL(WDOG_PAD_CTRL),
+};
+
+#ifdef CONFIG_FSL_FSPI
+#define QSPI_PAD_CTRL	(PAD_CTL_DSE2 | PAD_CTL_HYS)
+static iomux_v3_cfg_t const qspi_pads[] = {
+	IMX8MN_PAD_NAND_ALE__QSPI_A_SCLK | MUX_PAD_CTRL(QSPI_PAD_CTRL | PAD_CTL_PE | PAD_CTL_PUE),
+	IMX8MN_PAD_NAND_CE0_B__QSPI_A_SS0_B | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+
+	IMX8MN_PAD_NAND_DQS__QSPI_A_DQS | MUX_PAD_CTRL(QSPI_PAD_CTRL) | MUX_MODE_SION,
+	IMX8MN_PAD_NAND_DATA00__QSPI_A_DATA0 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+	IMX8MN_PAD_NAND_DATA01__QSPI_A_DATA1 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+	IMX8MN_PAD_NAND_DATA02__QSPI_A_DATA2 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+	IMX8MN_PAD_NAND_DATA03__QSPI_A_DATA3 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+};
+
+int board_qspi_init(void)
+{
+	imx_iomux_v3_setup_multiple_pads(qspi_pads, ARRAY_SIZE(qspi_pads));
+
+	set_clk_qspi();
+
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_MXC_SPI
 #define SPI_PAD_CTRL	(PAD_CTL_DSE2 | PAD_CTL_HYS)
@@ -142,6 +168,10 @@ int board_init(void)
 
 #ifdef CONFIG_MXC_SPI
 	setup_spi();
+#endif
+
+#ifdef CONFIG_FSL_FSPI
+	board_qspi_init();
 #endif
 
 	return 0;
