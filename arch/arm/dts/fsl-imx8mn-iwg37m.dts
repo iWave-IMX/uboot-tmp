@@ -32,6 +32,13 @@
 		stdout-path = &uart4;
 	};
 
+	unused_gpios: unused_gpios { /* GPIO: Setting unused GPIOs as input pins */
+		compatible = "iwave,unused-gpios";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_unused_gpio>;
+		status= "okay";
+	};
+
 	memory@40000000 { /* RAM: 1GB Memory support */
         	device_type = "memory";
         	reg = <0x0 0x40000000 0 0x40000000>;
@@ -301,6 +308,19 @@
 			>;
 		};
 
+		pinctrl_unused_gpio: unused_gpiogrp{
+			fsl,pins = <
+				/* GPIO: Unused GPIO IOMUX Pin Configuration */
+				MX8MN_IOMUXC_GPIO1_IO00__GPIO1_IO0		0x41
+				MX8MN_IOMUXC_GPIO1_IO10__GPIO1_IO10		0x41
+				MX8MN_IOMUXC_GPIO1_IO11__GPIO1_IO11		0x41
+				MX8MN_IOMUXC_GPIO1_IO14__GPIO1_IO14		0x41
+				MX8MN_IOMUXC_GPIO1_IO15__GPIO1_IO15		0x41
+				MX8MN_IOMUXC_SPDIF_TX__GPIO5_IO3		0x41
+				MX8MN_IOMUXC_SPDIF_RX__GPIO5_IO4		0x41
+				MX8MN_IOMUXC_SPDIF_EXT_CLK__GPIO5_IO5		0x41
+			>;
+		};
 	};
 };
 
@@ -556,3 +576,13 @@
 	arm-supply = <&buck2_reg>;
 };
 
+&unused_gpios { /* GPIO: iWave Unused GPIO pins */ 
+	gpios = <&gpio1 0 0>,
+		<&gpio1 10 0>,
+		<&gpio1 11 0>,
+		<&gpio1 14 0>,
+		<&gpio1 15 0>,
+		<&gpio5 3 0>,
+		<&gpio5 4 0>,
+		<&gpio5 5 0>;
+};

@@ -308,4 +308,12 @@ config MPC8XXX_GPIO
 	  Aside from the standard functions of input/output mode, and output
 	  value setting, the open-drain feature, which can configure individual
 	  GPIOs to work as open-drain outputs, is supported.
+
+config IMX8MN_UNUSED_GPIO
+	bool "iWave unused GPIO"
+	depends on DM_GPIO && TARGET_IMX8MN_IWG37M
+	default y
+	help
+	  Say yes here to set the unused GPIOs as input in iWG37M platform.
+
 endmenu

@@ -8,6 +8,7 @@
 ifndef CONFIG_SPL_BUILD
 obj-$(CONFIG_DWAPB_GPIO)	+= dwapb_gpio.o
 obj-$(CONFIG_AXP_GPIO)		+= axp_gpio.o
+obj-$(CONFIG_IMX8MN_UNUSED_GPIO) += gpio-unused.o
 endif
 obj-$(CONFIG_DM_GPIO)		+= gpio-uclass.o
 
