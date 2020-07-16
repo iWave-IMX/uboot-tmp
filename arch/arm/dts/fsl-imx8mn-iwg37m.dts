@@ -20,6 +20,31 @@
 	model = "iW-RainboW-G37M-i.MX8MN-SODIMM";
 	compatible = "fsl,imx8mn-iwg37m", "fsl,imx8mn";
 
+	memory@40000000 { /* RAM: 1GB Memory support */
+        	device_type = "memory";
+        	reg = <0x0 0x40000000 0 0x40000000>;
+	};
+
+	reserved-memory { /* RAM: 1GB Memory support */
+        	#address-cells = <2>;
+        	#size-cells = <2>;
+        	ranges;
+
+		/* global autoconfigured region for contiguous allocations */
+        	linux,cma {
+                	compatible = "shared-dma-pool";
+                	reusable;
+                	size = <0 0x14000000>;
+                	alloc-ranges = <0 0x40000000 0 0x30000000>;
+                	linux,cma-default;
+        	};
+	};
+
+	rpmsg_reserved: rpmsg@0xb8000000 {
+		no-map;
+		reg = <0 0x78000000 0 0x400000>;
+	};
+
 };
 
 &iomuxc {
