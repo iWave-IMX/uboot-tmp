@@ -84,6 +84,15 @@ config TARGET_IMX8MN_DDR4_EVK
 	select SUPPORT_SPL
 	select IMX8M_DDR4
 
+config TARGET_IMX8MN_IWG37M
+	bool "imx8mn LPDDR4 IWG37M board"
+	select IMX8MN
+	select SUPPORT_SPL
+	select IMX8M_LPDDR4
+
+config TARGET_IMX8MN_IWG37M_UUU
+	bool "Support imx8mn LPDDR4 IWG37M board uuu"
+	depends on TARGET_IMX8MN_IWG37M
 endchoice
 
 config SYS_SOC
@@ -96,5 +105,6 @@ source "board/freescale/imx8mq_aiy/Kconfig"
 source "board/freescale/imx8mm_evk/Kconfig"
 source "board/freescale/imx8mm_val/Kconfig"
 source "board/freescale/imx8mn_evk/Kconfig"
+source "board/freescale/imx8mn_iwg37m/Kconfig"
 
 endif
