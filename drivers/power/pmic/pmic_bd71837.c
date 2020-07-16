@@ -22,7 +22,12 @@ int power_bd71837_init (unsigned char bus) {
 
 	p->name = bd71837_name;
 	p->interface = PMIC_I2C;
+#ifdef CONFIG_TARGET_IMX8MN_IWG37M
+	/* IWG37M: PMIC: Assigning number of registers */
+	p->number_of_regs = BD718XX_MAX_REGISTER - 1;
+#else
 	p->number_of_regs = BD71837_REG_NUM;
+#endif
 	p->hw.i2c.addr = 0x4b;
 	p->hw.i2c.tx_num = 1;
 	p->bus = bus;

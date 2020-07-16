@@ -15,16 +15,29 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 static const struct pmic_child_info pmic_children_info[] = {
+#ifdef CONFIG_TARGET_IMX8MN_IWG37M
+	/* IWG37M: PMIC: BD718XX */
+	/* buck */
+	{ .prefix = "b", .driver = BD718XX_REGULATOR_DRIVER},
+	/* ldo */
+	{ .prefix = "l", .driver = BD718XX_REGULATOR_DRIVER},
+#else
 	/* buck */
 	{ .prefix = "b", .driver = BD71837_REGULATOR_DRIVER},
 	/* ldo */
 	{ .prefix = "l", .driver = BD71837_REGULATOR_DRIVER},
 	{ },
+#endif
 };
 
 static int bd71837_reg_count(struct udevice *dev)
 {
+#ifdef CONFIG_TARGET_IMX8MN_IWG37M
+	/* IWG37M: PMIC: BD718X7 return value of number of registers */
+	return BD718XX_MAX_REGISTER - 1;
+#else
 	return BD71837_REG_NUM;
+#endif
 }
 
 static int bd71837_write(struct udevice *dev, uint reg, const uint8_t *buff,
@@ -69,6 +82,36 @@ static int bd71837_bind(struct udevice *dev)
 	/* Always return success for this device */
 	return 0;
 }
+#ifdef CONFIG_TARGET_IMX8MN_IWG37M
+/* IWG37M: PMIC: BD718X7 probe function */
+static int bd718x7_probe(struct udevice *dev)
+{
+	int ret;
+	u8 unlock;
+
+	/* Unlock the PMIC regulator control before probing the children */
+	ret = pmic_reg_read(dev, BD718XX_REGLOCK);
+	if (ret < 0) {
+		debug("%s: %s Failed to read lock register, error %d\n",
+		      __func__, dev->name, ret);
+		return ret;
+	}
+
+	unlock = ret;
+	unlock &= ~(BD718XX_REGLOCK_PWRSEQ | BD718XX_REGLOCK_VREG);
+
+	ret = pmic_reg_write(dev, BD718XX_REGLOCK, unlock);
+	if (ret) {
+		debug("%s: %s Failed to unlock regulator control\n", __func__,
+		      dev->name);
+		return ret;
+	}
+	debug("%s: '%s' - BD718x7 PMIC register unlocked\n", __func__,
+	      dev->name);
+
+	return 0;
+}
+#endif
 
 static struct dm_pmic_ops bd71837_ops = {
 	.reg_count = bd71837_reg_count,
@@ -77,8 +120,14 @@ static struct dm_pmic_ops bd71837_ops = {
 };
 
 static const struct udevice_id bd71837_ids[] = {
+#ifdef CONFIG_TARGET_IMX8MN_IWG37M
+/* IWG37M: PMIC:Support for PMIC BD71837 and BD71847 */
+	{ .compatible = "rohm,bd71837", .data = ROHM_CHIP_TYPE_BD71837, },
+	{ .compatible = "rohm,bd71847", .data = ROHM_CHIP_TYPE_BD71847, },
+#else
 	{ .compatible = "rohm,bd71837", .data = 0x4b, },
 	{ }
+#endif
 };
 
 U_BOOT_DRIVER(pmic_bd71837) = {
@@ -86,5 +135,9 @@ U_BOOT_DRIVER(pmic_bd71837) = {
 	.id = UCLASS_PMIC,
 	.of_match = bd71837_ids,
 	.bind = bd71837_bind,
+#ifdef CONFIG_TARGET_IMX8MN_IWG37M
+	/* IWG37M: PMIC:Probe function for PMIC BD718X7 */
+	.probe = bd718x7_probe,
+#endif
 	.ops = &bd71837_ops,
 };

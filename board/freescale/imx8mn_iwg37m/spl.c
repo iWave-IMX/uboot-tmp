@@ -20,6 +20,8 @@
 #include <asm/mach-imx/iomux-v3.h>
 #include <asm/arch/imx8mn_pins.h>
 #include <asm/arch/sys_proto.h>
+#include <power/pmic.h>
+#include <power/bd71837.h>
 #include <asm/arch/clock.h>
 #include <asm/mach-imx/gpio.h>
 #include <asm/gpio.h>
@@ -35,6 +37,73 @@ void spl_dram_init(void)
 	ddr_init(&dram_timing);
 }
 
+#define I2C_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_HYS | PAD_CTL_PUE | PAD_CTL_PE)
+#define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
+struct i2c_pads_info i2c_pad_info1 = {
+	.scl = {
+		.i2c_mode = IMX8MN_PAD_I2C1_SCL__I2C1_SCL | PC,
+		.gpio_mode = IMX8MN_PAD_I2C1_SCL__GPIO5_IO14 | PC,
+		.gp = IMX_GPIO_NR(5, 14),
+	},
+	.sda = {
+		.i2c_mode = IMX8MN_PAD_I2C1_SDA__I2C1_SDA | PC,
+		.gpio_mode = IMX8MN_PAD_I2C1_SDA__GPIO5_IO15 | PC,
+		.gp = IMX_GPIO_NR(5, 15),
+	},
+};
+
+#ifdef CONFIG_POWER
+#define I2C_PMIC	0
+int power_init_board(void)
+{
+	struct pmic *p;
+	int ret;
+
+	ret = power_bd71837_init(I2C_PMIC);
+	if (ret)
+		printf("power init failed");
+
+	p = pmic_get("BD71837");
+	pmic_probe(p);
+
+
+	/* decrease RESET key long push time from the default 10s to 10ms */
+	pmic_reg_write(p, BD718XX_PWRONCONFIG1, 0x0);
+
+	/* unlock the PMIC regs */
+	pmic_reg_write(p, BD718XX_REGLOCK, 0x1);
+
+#ifdef CONFIG_IMX8MN_FORCE_NOM_SOC
+	/* increase VDD_ARM to typical value 0.85v for 1.2Ghz */
+	pmic_reg_write(p, BD718XX_BUCK2_VOLT_RUN, 0xf);
+
+	/* increase VDD_SOC to typical value 0.85v for nominal mode */
+	pmic_reg_write(p, BD718XX_BUCK1_VOLT_RUN, 0xf);
+
+	/* increase VDD_DRAM & GPU to typical value 0.85v for nominal mode */
+	pmic_reg_write(p, BD718XX_1ST_NODVS_BUCK_VOLT, 0x46);
+#else
+	/* increase VDD_ARM to typical value 0.95v for 1.5Ghz */
+	pmic_reg_write(p, BD718XX_BUCK2_VOLT_RUN, 0x19);
+
+	/* increase VDD_SOC to typical value 0.95v */
+	pmic_reg_write(p, BD718XX_BUCK1_VOLT_RUN, 0x19);
+
+	/* increase VDD_DRAM & GPU to typical value 0.975v */
+	pmic_reg_write(p, BD718XX_1ST_NODVS_BUCK_VOLT, 0x83);
+#endif
+
+#ifdef CONFIG_IMX8M_DDR4
+	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
+	pmic_reg_write(p, BD718XX_4TH_NODVS_BUCK_VOLT, 0x28);
+#endif
+
+	/* lock the PMIC regs */
+	pmic_reg_write(p, BD718XX_REGLOCK, 0x11);
+
+	return 0;
+}
+#endif
 
 void spl_board_init(void)
 {
@@ -73,6 +142,11 @@ void board_init_f(ulong dummy)
 	}
 
 	enable_tzc380();
+
+	/* Adjust pmic voltage to 1.0V for 800M */
+	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+
+	power_init_board();
 
 	/* DDR initialization */
 	spl_dram_init();
