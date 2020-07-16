@@ -94,6 +94,26 @@
 
 	imx8mn-iwg37m {
 
+		pinctrl_fec1: fec1grp { /*Ethernet: IOMUX Pin Configuration */
+			fsl,pins = <
+				MX8MN_IOMUXC_ENET_MDC__ENET1_MDC		0x3
+				MX8MN_IOMUXC_ENET_MDIO__ENET1_MDIO		0x3
+				MX8MN_IOMUXC_ENET_TD3__ENET1_RGMII_TD3		0x1f
+				MX8MN_IOMUXC_ENET_TD2__ENET1_RGMII_TD2		0x1f
+				MX8MN_IOMUXC_ENET_TD1__ENET1_RGMII_TD1		0x1f
+				MX8MN_IOMUXC_ENET_TD0__ENET1_RGMII_TD0		0x1f
+				MX8MN_IOMUXC_ENET_RD3__ENET1_RGMII_RD3		0x91
+				MX8MN_IOMUXC_ENET_RD2__ENET1_RGMII_RD2		0x91
+				MX8MN_IOMUXC_ENET_RD1__ENET1_RGMII_RD1		0x91
+				MX8MN_IOMUXC_ENET_RD0__ENET1_RGMII_RD0		0x91
+				MX8MN_IOMUXC_ENET_TXC__ENET1_RGMII_TXC		0x1f
+				MX8MN_IOMUXC_ENET_RXC__ENET1_RGMII_RXC		0x91
+				MX8MN_IOMUXC_ENET_RX_CTL__ENET1_RGMII_RX_CTL	0x91
+				MX8MN_IOMUXC_ENET_TX_CTL__ENET1_RGMII_TX_CTL	0x1f
+				MX8MN_IOMUXC_SAI3_RXFS__GPIO4_IO28		0x19 /* Ethernet Reset GPIO */
+			>;
+		};
+
 		pinctrl_flexspi0: flexspi0grp { /* QSPI: IOMUX Pin Configuration */
 			fsl,pins = <
 				MX8MN_IOMUXC_NAND_ALE__QSPI_A_SCLK 		0x1c4
@@ -447,6 +467,28 @@
 		compatible = "spi-flash";
 		spi-max-frequency = <29000000>;
 		spi-nor,ddr-quad-read-dummy = <8>;
+	};
+};
+
+&fec1 { /* FEC1: AR8031 PHY ENET */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_fec1>;
+	phy-mode = "rgmii-id";
+	phy-handle = <&ethphy0>;
+	fsl,magic-packet;
+	status = "okay";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ethphy0: ethernet-phy@0 {
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <0>;
+			at803x,led-act-blind-workaround;
+			at803x,eee-okay;
+			at803x,vddio-1p8v;
+		};
 	};
 };
 
