@@ -177,6 +177,23 @@ int board_init(void)
 	return 0;
 }
 
+int board_mmc_get_env_dev(int devno)
+{
+	if(devno == 0)
+	return devno + 2;
+
+	else if (devno == 2)
+	return devno - 2;
+
+	else
+	return devno;
+}
+
+int mmc_map_to_kernel_blk(int devno)
+{
+	return devno;
+}
+
 
 #define GPIO_PAD_CFG_CTRL ( PAD_CTL_DSE0 | PAD_CTL_ODE | PAD_CTL_PUE )
 
@@ -246,6 +263,9 @@ int board_late_init(void)
 {
 	printboard_info();
 	peripheral_reset();
+#ifdef CONFIG_ENV_IS_IN_MMC
+	board_late_mmc_env_init();
+#endif
 
 	return 0;
 }

@@ -158,6 +158,12 @@ extern env_t environment;
 #endif /* ENV_IS_EMBEDDED */
 
 extern const unsigned char default_environment[];
+#ifdef CONFIG_TARGET_IMX8MN_IWG37M
+/* IWG37M: Declare default environment for boot device */
+extern const unsigned char default_environment_emmc[];
+extern const unsigned char default_environment_msd1[];
+extern const unsigned char default_environment_msd2[];
+#endif
 extern env_t *env_ptr;
 
 #if defined(CONFIG_NEEDS_MANUAL_RELOC)
