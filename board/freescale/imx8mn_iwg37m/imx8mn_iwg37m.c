@@ -33,6 +33,10 @@
 #include <power/bd71837.h>
 #include "../common/tcpc.h"
 #include <usb.h>
+#include <sec_mipi_dsim.h>
+#include <imx_mipi_dsi_bridge.h>
+#include <mipi_dsi_panel.h>
+#include <asm/mach-imx/video.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -277,6 +281,110 @@ int mmc_map_to_kernel_blk(int devno)
 	return devno;
 }
 
+#ifdef CONFIG_VIDEO_MXS
+
+static const struct sec_mipi_dsim_plat_data imx8mn_mipi_dsim_plat_data = {
+	.version	= 0x1060200,
+	.max_data_lanes = 4,
+	.max_data_rate  = 1500000000ULL,
+	.reg_base = MIPI_DSI_BASE_ADDR,
+	.gpr_base = CSI_BASE_ADDR + 0x8000,
+};
+
+#define DISPLAY_MIX_SFT_RSTN_CSR		0x00
+#define DISPLAY_MIX_CLK_EN_CSR		0x04
+
+   /* 'DISP_MIX_SFT_RSTN_CSR' bit fields */
+#define BUS_RSTN_BLK_SYNC_SFT_EN	BIT(8)
+#define LCDIF_APB_CLK_RSTN             BIT(5)
+#define LCDIF_PIXEL_CLK_RSTN           BIT(4)
+
+   /* 'DISP_MIX_CLK_EN_CSR' bit fields */
+#define BUS_BLK_CLK_SFT_EN             BIT(8)
+#define LCDIF_PIXEL_CLK_SFT_EN         BIT(5)
+#define LCDIF_APB_CLK_SFT_EN           BIT(4)
+
+void disp_mix_bus_rstn_reset(ulong gpr_base, bool reset)
+{
+	if (!reset)
+		/* release reset */
+		setbits_le32(gpr_base + DISPLAY_MIX_SFT_RSTN_CSR, BUS_RSTN_BLK_SYNC_SFT_EN | LCDIF_APB_CLK_RSTN |LCDIF_PIXEL_CLK_RSTN);
+	else
+		/* hold reset */
+		clrbits_le32(gpr_base + DISPLAY_MIX_SFT_RSTN_CSR, BUS_RSTN_BLK_SYNC_SFT_EN | LCDIF_APB_CLK_RSTN |LCDIF_PIXEL_CLK_RSTN);
+}
+
+void disp_mix_lcdif_clks_enable(ulong gpr_base, bool enable)
+{
+	if (enable)
+		/* enable lcdif clks */
+		setbits_le32(gpr_base + DISPLAY_MIX_CLK_EN_CSR, BUS_BLK_CLK_SFT_EN | LCDIF_PIXEL_CLK_SFT_EN | LCDIF_APB_CLK_SFT_EN);
+	else
+		/* disable lcdif clks */
+		clrbits_le32(gpr_base + DISPLAY_MIX_CLK_EN_CSR, BUS_BLK_CLK_SFT_EN | LCDIF_PIXEL_CLK_SFT_EN | LCDIF_APB_CLK_SFT_EN);
+}
+
+struct mipi_dsi_client_dev rm67198_dev = {
+	.channel	= 0,
+	.lanes = 4,
+	.format  = MIPI_DSI_FMT_RGB888,
+	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
+			  MIPI_DSI_MODE_EOT_PACKET | MIPI_DSI_MODE_VIDEO_HSE,
+};
+
+#define FSL_SIP_GPC			0xC2000000
+#define FSL_SIP_CONFIG_GPC_PM_DOMAIN	0x3
+#define DISPMIX				9
+#define MIPI				10
+
+void do_enable_mipi_led(struct display_info_t const *dev)
+{
+	/* enable the dispmix & mipi phy power domain */
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, DISPMIX, true, 0);
+	call_imx_sip(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_PM_DOMAIN, MIPI, true, 0);
+
+	/* Put lcdif out of reset */
+	disp_mix_bus_rstn_reset(imx8mn_mipi_dsim_plat_data.gpr_base, false);
+	disp_mix_lcdif_clks_enable(imx8mn_mipi_dsim_plat_data.gpr_base, true);
+
+	/* Setup mipi dsim */
+	sec_mipi_dsim_setup(&imx8mn_mipi_dsim_plat_data);
+
+	rm67198_init();
+	rm67198_dev.name = displays[0].mode.name;
+	imx_mipi_dsi_bridge_attach(&rm67198_dev); /* attach rm67198 device */
+}
+
+void board_quiesce_devices(void)
+{
+	gpio_request(IMX_GPIO_NR(1, 8), "DSI EN");
+	gpio_direction_output(IMX_GPIO_NR(1, 8), 0);
+}
+
+struct display_info_t const displays[] = {{
+	.bus = LCDIF_BASE_ADDR,
+	.addr = 0,
+	.pixfmt = 24,
+	.detect = NULL,
+	.enable	= do_enable_mipi_led,
+	.mode	= {
+		.name			= "RM67198_OLED",
+		.refresh		= 60,
+		.xres			= 1080,
+		.yres			= 1920,
+		.pixclock		= 7575, /* 132000000 */
+		.left_margin	= 36,
+		.right_margin	= 26,
+		.upper_margin	= 4,
+		.lower_margin	= 8,
+		.hsync_len		= 2,
+		.vsync_len		= 4,
+		.sync			= FB_SYNC_EXT,
+		.vmode			= FB_VMODE_NONINTERLACED
+
+} } };
+size_t display_count = ARRAY_SIZE(displays);
+#endif
 
 #define GPIO_PAD_CFG_CTRL ( PAD_CTL_DSE0 | PAD_CTL_ODE | PAD_CTL_PUE )
 

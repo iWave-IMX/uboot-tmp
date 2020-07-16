@@ -681,13 +681,15 @@ static int sec_mipi_dsim_bridge_attach(struct mipi_dsi_bridge_driver *bridge_dri
 		printf("invalid data lanes number\n");
 		return -EINVAL;
 	}
-
+/* IWG37M: MIPI DSI: Support added for Non-Burst Mode With Sync Event video mode*/
+#ifndef CONFIG_TARGET_IMX8MN_IWG37M
 	if (!(dsi_dev->mode_flags & MIPI_DSI_MODE_VIDEO)		||
 	    !((dsi_dev->mode_flags & MIPI_DSI_MODE_VIDEO_BURST)	||
 	      (dsi_dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE))) {
 		printf("unsupported dsi mode\n");
 		return -EINVAL;
 	}
+#endif
 
 	if (dsi_dev->format != MIPI_DSI_FMT_RGB888 &&
 	    dsi_dev->format != MIPI_DSI_FMT_RGB565 &&
