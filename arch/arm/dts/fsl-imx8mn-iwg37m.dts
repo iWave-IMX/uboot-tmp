@@ -16,6 +16,9 @@
 
 #include "fsl-imx8mn.dtsi"
 
+/* Adding this line as test */
+
+
 / {
 	model = "iW-RainboW-G37M-i.MX8MN-SODIMM";
 	compatible = "fsl,imx8mn-iwg37m", "fsl,imx8mn";
